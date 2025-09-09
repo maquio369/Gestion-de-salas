@@ -1,0 +1,138 @@
+{% extends 'eventos/base.html' %}
+
+{% block title %}Crear Nota - Gestión de Eventos{% endblock %}
+
+{% block content %}
+<div style="background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); max-width: 600px; margin: 0 auto;">
+    <div style="display: flex; align-items: center; margin-bottom: 25px;">
+        <a href="{% url 'notas' %}" style="color: #666; text-decoration: none; margin-right: 15px; font-size: 1.2em;">←</a>
+        <h2 style="margin: 0; color: #333; font-size: 1.8em;">📝 Nueva Nota</h2>
+    </div>
+
+    <form method="post" style="display: flex; flex-direction: column; gap: 20px;">
+        {% csrf_token %}
+        
+        <div>
+            <label for="{{ form.titulo.id_for_label }}" style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                Título
+            </label>
+            {{ form.titulo }}
+        </div>
+
+        <div>
+            <label for="{{ form.contenido.id_for_label }}" style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                Contenido
+            </label>
+            {{ form.contenido }}
+        </div>
+
+        <div>
+            <label style="display: block; margin-bottom: 12px; font-weight: 600; color: #333;">
+                Color de la nota
+            </label>
+            {{ form.color }}
+            <div class="color-picker">
+                <div class="color-option" data-color="#009885" style="background-color: #009885;"></div>
+                <div class="color-option" data-color="#C90166" style="background-color: #C90166;"></div>
+                <div class="color-option" data-color="#AE192D" style="background-color: #AE192D;"></div>
+                <div class="color-option" data-color="#ff6b35" style="background-color: #ff6b35;"></div>
+                <div class="color-option" data-color="#6c757d" style="background-color: #6c757d;"></div>
+                <div class="color-option" data-color="#0052cc" style="background-color: #0052cc;"></div>
+                <div class="color-option" data-color="#6f42c1" style="background-color: #6f42c1;"></div>
+                <div class="color-option" data-color="#e83e8c" style="background-color: #e83e8c;"></div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+            <a href="{% url 'notas' %}" style="padding: 12px 20px; background: #f5f5f5; color: #666; text-decoration: none; border-radius: 8px; font-weight: 600; transition: all 0.3s ease;">
+                Cancelar
+            </a>
+            <button type="submit" style="padding: 12px 20px; background: linear-gradient(135deg, #009885 0%, #C90166 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+                💾 Guardar Nota
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+.form-control {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #009885;
+}
+
+.color-picker {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.color-option {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.color-option:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.color-option.selected {
+    border-color: #333;
+    transform: scale(1.15);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.color-option.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const colorOptions = document.querySelectorAll('.color-option');
+    const colorInput = document.getElementById('id_color');
+    
+    // Seleccionar color por defecto
+    const defaultColor = '#009885';
+    colorInput.value = defaultColor;
+    document.querySelector(`[data-color="${defaultColor}"]`).classList.add('selected');
+    
+    colorOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            // Remover selección anterior
+            colorOptions.forEach(opt => opt.classList.remove('selected'));
+            
+            // Agregar selección actual
+            this.classList.add('selected');
+            
+            // Actualizar valor del input hidden
+            colorInput.value = this.dataset.color;
+        });
+    });
+});
+</script>
+{% endblock %}

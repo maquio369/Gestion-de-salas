@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>{% block title %}Gestión de Eventos{% endblock %}</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+  /* Estilos básicos */
+  body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f8f9fa;
+      color: #333;
+  }
+  
+  header {
+      background: linear-gradient(135deg, #009885 0%, #C90166 70%, #AE192D 100%);
+      padding: 15px 30px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      position: relative;
+      overflow: hidden;
+  }
+  
+  header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      z-index: 0;
+  }
+  
+  .logo {
+      position: relative;
+      z-index: 1;
+  }
+  
+  .logo a {
+      color: white;
+      font-weight: 800;
+      font-size: 1.4em;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+  
+  .logo a:hover {
+      transform: scale(1.05);
+      text-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  }
+  
+  nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      z-index: 1;
+  }
+  
+  nav a {
+      color: white;
+      text-decoration: none;
+      padding: 10px 18px;
+      font-weight: 600;
+      font-size: 14px;
+      border-radius: 25px;
+      transition: all 0.3s ease;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+  }
+  
+  nav a:hover {
+      background: rgba(255,255,255,0.25);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      border-color: rgba(255,255,255,0.4);
+  }
+  
+  nav a:active {
+      transform: translateY(0);
+  }
+  
+  .logout-btn {
+      background: linear-gradient(135deg, #AE192D 0%, #C90166 100%);
+      border: none;
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 10px 18px;
+      border-radius: 25px;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 10px rgba(174, 25, 45, 0.3);
+      border: 1px solid rgba(255,255,255,0.2);
+  }
+  
+  .logout-btn:hover {
+      background: linear-gradient(135deg, #C90166 0%, #AE192D 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(174, 25, 45, 0.4);
+  }
+  
+  .logout-btn:active {
+      transform: translateY(0);
+  }
+  
+  main {
+      max-width: 900px !important;
+      margin: 30px auto !important;
+      padding: 0 15px !important;
+  }
+  
+  /* Asegurar que los contenedores de formularios respeten el main */
+  .container {
+      max-width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+  }
+  
+  @media (max-width: 768px) {
+      header {
+          padding: 12px 20px;
+          flex-direction: column;
+          gap: 15px;
+      }
+      
+      .logo a {
+          font-size: 1.2em;
+      }
+      
+      nav {
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 6px;
+      }
+      
+      nav a, .logout-btn {
+          padding: 8px 14px;
+          font-size: 12px;
+      }
+  }
+</style>
+{% block extrahead %}{% endblock %}
+</head>
+<body>
+  <header>
+      <div class="logo">
+          <a href="{% url 'dashboard' %}">
+              🎯 Gestión Eventos
+          </a>
+      </div>
+      <nav>
+          <a href="{% url 'dashboard' %}">📊 Dashboard</a>
+          <a href="{% url 'calendario' %}">📅 Calendario</a>
+          <a href="{% url 'estadisticas' %}">📈 Estadísticas</a>
+          <a href="{% url 'notas' %}">📝 Notas</a>
+          <a href="{% url 'crear_evento' %}">➕ Crear Evento</a>
+          {% if request.resolver_match.url_name == 'dashboard' %}
+          <form method="post" action="{% url 'logout' %}" style="display: inline; margin: 0;">
+              {% csrf_token %}
+              <button type="submit" class="logout-btn">🚪 Salir</button>
+          </form>
+          {% endif %}
+      </nav>
+  </header>
+  <main>
+      {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

@@ -1,0 +1,560 @@
+{% extends 'eventos/base.html' %}
+
+{% block title %}Crear Evento{% endblock %}
+
+{% block extrahead %}
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .container {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .form-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .form-header h1 {
+    color: #009885;
+    font-size: 1.6em;
+    font-weight: 700;
+    margin-bottom: 5px;
+  }
+  
+  .form-header p {
+    color: #666;
+    font-size: 1em;
+    margin: 0;
+  }
+  
+  form {
+    background: white;
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  form::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #009885 0%, #C90166 50%, #AE192D 100%);
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+    position: relative;
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  input, select, textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e8ecef;
+    border-radius: 12px;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+  }
+  
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #009885;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(0, 152, 133, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  textarea {
+    resize: vertical;
+    min-height: 60px;
+  }
+  
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    background: #f8f9fa;
+    padding: 12px 15px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    border: 2px solid #e8ecef;
+    transition: all 0.3s ease;
+  }
+  
+  .checkbox-group:hover {
+    background: white;
+    border-color: #009885;
+  }
+  
+  .checkbox-group input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    accent-color: #009885;
+    cursor: pointer;
+  }
+  
+  .checkbox-group label {
+    margin: 0;
+    cursor: pointer;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: normal;
+    color: #495057;
+  }
+  
+  .button-group {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+    justify-content: center;
+  }
+  
+  button {
+    background: linear-gradient(135deg, #009885 0%, #00b894 100%);
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 152, 133, 0.3);
+    min-width: 120px;
+  }
+  
+  button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 152, 133, 0.4);
+    background: linear-gradient(135deg, #00b894 0%, #009885 100%);
+  }
+  
+  button:active {
+    transform: translateY(0);
+  }
+  
+  .cancelar {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    color: white;
+    text-decoration: none;
+    padding: 12px 25px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+    min-width: 120px;
+    text-align: center;
+    display: inline-block;
+  }
+  
+  .cancelar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+    background: linear-gradient(135deg, #495057 0%, #6c757d 100%);
+  }
+  
+  .form-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #009885;
+    font-size: 18px;
+    pointer-events: none;
+  }
+  
+  .laptop-number {
+    margin-top: 10px;
+    padding: 15px;
+    background: linear-gradient(135deg, rgba(0, 152, 133, 0.1) 0%, rgba(201, 1, 102, 0.1) 100%);
+    border-radius: 12px;
+    border: 2px solid rgba(0, 152, 133, 0.2);
+    transition: all 0.3s ease;
+  }
+  
+  .laptop-number.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .laptop-number.hide {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+    padding: 0 15px;
+    margin: 0;
+    overflow: hidden;
+  }
+  
+  .error {
+    color: #AE192D;
+    font-size: 14px;
+    margin-top: 5px;
+    font-weight: 500;
+  }
+  
+  .estado-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+  }
+  
+  .estado-option {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border: 2px solid #e8ecef;
+    border-radius: 12px;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .estado-option::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: transparent;
+    transition: all 0.3s ease;
+  }
+  
+  .estado-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    border-color: #009885;
+  }
+  
+  .estado-option.active {
+    background: linear-gradient(135deg, rgba(0, 152, 133, 0.1) 0%, rgba(0, 152, 133, 0.05) 100%);
+    border-color: #009885;
+    box-shadow: 0 4px 15px rgba(0, 152, 133, 0.2);
+  }
+  
+  .estado-option.active::before {
+    background: #009885;
+  }
+  
+  .estado-option[data-value="programado"].active::before {
+    background: #009885;
+  }
+  
+  .estado-option[data-value="activo"].active::before {
+    background: #dc3545;
+  }
+  
+  .estado-option[data-value="finalizado"].active::before {
+    background: #28a745;
+  }
+  
+  .estado-option[data-value="cancelado"].active::before {
+    background: #6c757d;
+  }
+  
+  .estado-icon {
+    font-size: 24px;
+    margin-right: 12px;
+    min-width: 30px;
+    text-align: center;
+  }
+  
+  .estado-info {
+    flex: 1;
+  }
+  
+  .estado-title {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+  
+  .estado-desc {
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: 400;
+  }
+  
+  .estado-check {
+    font-size: 18px;
+    color: #009885;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.3s ease;
+  }
+  
+  .estado-option.active .estado-check {
+    opacity: 1;
+    transform: scale(1);
+  }
+  
+  .estado-option.active .estado-title {
+    color: #009885;
+  }
+  
+  @media (max-width: 768px) {
+    .container {
+      margin: 20px auto;
+      padding: 0 15px;
+    }
+    
+    form {
+      padding: 30px 20px;
+    }
+    
+    .button-group {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    button, .cancelar {
+      width: 100%;
+      max-width: 300px;
+    }
+    
+    .estado-selector {
+      grid-template-columns: 1fr;
+    }
+    
+    .estado-option {
+      padding: 12px;
+    }
+    
+    .estado-icon {
+      font-size: 20px;
+      margin-right: 10px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="form-header">
+    <h1>✨ Crear Nuevo Evento</h1>
+    <p>Completa la información para programar tu evento</p>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    
+    {% if form.non_field_errors %}
+      <div class="error">{{ form.non_field_errors }}</div>
+    {% endif %}
+    
+    <div class="form-group">
+      <label for="{{ form.nombre.id_for_label }}">📝 Nombre del Evento</label>
+      {{ form.nombre }}
+      {% if form.nombre.errors %}
+        <div class="error">{{ form.nombre.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.fecha_hora.id_for_label }}">📅 Fecha y Hora</label>
+      {{ form.fecha_hora }}
+      {% if form.fecha_hora.errors %}
+        <div class="error">{{ form.fecha_hora.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.sala.id_for_label }}">🏢 Sala</label>
+      {{ form.sala }}
+      {% if form.sala.errors %}
+        <div class="error">{{ form.sala.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.observaciones.id_for_label }}">💬 Observaciones</label>
+      {{ form.observaciones }}
+      {% if form.observaciones.errors %}
+        <div class="error">{{ form.observaciones.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="checkbox-group">
+      {{ form.requiere_laptop }}
+      <label for="{{ form.requiere_laptop.id_for_label }}">💻 ¿Se requiere Laptop?</label>
+    </div>
+
+    <div class="laptop-number hide" id="laptop-number-group">
+      <label for="{{ form.numero_laptop.id_for_label }}">🔢 Número de Laptop</label>
+      {{ form.numero_laptop }}
+      {% if form.numero_laptop.errors %}
+        <div class="error">{{ form.numero_laptop.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="checkbox-group">
+      {{ form.requiere_proyector }}
+      <label for="{{ form.requiere_proyector.id_for_label }}">📽️ ¿Se requiere Proyector?</label>
+    </div>
+
+    <div class="form-group">
+      <label>📊 Estado del Evento</label>
+      <div class="estado-selector">
+        <input type="hidden" name="estado" id="estado-hidden" value="programado">
+        
+        <div class="estado-option active" data-value="programado">
+          <div class="estado-icon">📅</div>
+          <div class="estado-info">
+            <div class="estado-title">Programado</div>
+            <div class="estado-desc">Evento planificado</div>
+          </div>
+          <div class="estado-check">✓</div>
+        </div>
+        
+        <div class="estado-option" data-value="activo">
+          <div class="estado-icon">🔴</div>
+          <div class="estado-info">
+            <div class="estado-title">Activo</div>
+            <div class="estado-desc">En curso ahora</div>
+          </div>
+          <div class="estado-check">✓</div>
+        </div>
+        
+        <div class="estado-option" data-value="finalizado">
+          <div class="estado-icon">✅</div>
+          <div class="estado-info">
+            <div class="estado-title">Finalizado</div>
+            <div class="estado-desc">Evento completado</div>
+          </div>
+          <div class="estado-check">✓</div>
+        </div>
+        
+        <div class="estado-option" data-value="cancelado">
+          <div class="estado-icon">❌</div>
+          <div class="estado-info">
+            <div class="estado-title">Cancelado</div>
+            <div class="estado-desc">Evento cancelado</div>
+          </div>
+          <div class="estado-check">✓</div>
+        </div>
+      </div>
+      {% if form.estado.errors %}
+        <div class="error">{{ form.estado.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="button-group">
+      <button type="submit">💾 Guardar Evento</button>
+      <a href="{% url 'dashboard' %}" class="cancelar">❌ Cancelar</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const chkLaptop = document.getElementById('{{ form.requiere_laptop.id_for_label }}');
+    const laptopNumberGroup = document.getElementById('laptop-number-group');
+    const numeroLaptopInput = document.getElementById('{{ form.numero_laptop.id_for_label }}');
+
+    function toggleNumeroLaptop() {
+      if (chkLaptop.checked) {
+        laptopNumberGroup.classList.remove('hide');
+        laptopNumberGroup.classList.add('show');
+      } else {
+        laptopNumberGroup.classList.remove('show');
+        laptopNumberGroup.classList.add('hide');
+        numeroLaptopInput.value = '';
+      }
+    }
+
+    // Inicializar estado
+    toggleNumeroLaptop();
+    chkLaptop.addEventListener('change', toggleNumeroLaptop);
+    
+    // Animación suave para los inputs al hacer focus
+    const inputs = document.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+      input.addEventListener('focus', function() {
+        this.parentElement.style.transform = 'scale(1.02)';
+      });
+      
+      input.addEventListener('blur', function() {
+        this.parentElement.style.transform = 'scale(1)';
+      });
+    });
+    
+    // Manejo del selector de estado
+    const estadoOptions = document.querySelectorAll('.estado-option');
+    const estadoHidden = document.getElementById('estado-hidden');
+    
+    estadoOptions.forEach(option => {
+      option.addEventListener('click', function() {
+        // Remover clase active de todas las opciones
+        estadoOptions.forEach(opt => opt.classList.remove('active'));
+        
+        // Agregar clase active a la opción seleccionada
+        this.classList.add('active');
+        
+        // Actualizar el valor del input hidden
+        const valor = this.getAttribute('data-value');
+        estadoHidden.value = valor;
+        
+        // Efecto visual de selección
+        this.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+          this.style.transform = '';
+        }, 150);
+      });
+      
+      // Efecto hover mejorado
+      option.addEventListener('mouseenter', function() {
+        if (!this.classList.contains('active')) {
+          this.style.transform = 'translateY(-3px)';
+        }
+      });
+      
+      option.addEventListener('mouseleave', function() {
+        if (!this.classList.contains('active')) {
+          this.style.transform = '';
+        }
+      });
+    });
+    
+    // Inicializar el estado por defecto si hay un valor previo del formulario
+    const estadoActual = estadoHidden.value;
+    if (estadoActual) {
+      const opcionActual = document.querySelector(`[data-value="${estadoActual}"]`);
+      if (opcionActual) {
+        estadoOptions.forEach(opt => opt.classList.remove('active'));
+        opcionActual.classList.add('active');
+      }
+    }
+  });
+</script>
+{% endblock %}

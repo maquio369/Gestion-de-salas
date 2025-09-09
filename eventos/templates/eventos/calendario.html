@@ -1,0 +1,441 @@
+{% extends 'eventos/base.html' %}
+{% load dict_extras %}
+{% load tz %}
+
+{% block title %}Calendario de Eventos{% endblock %}
+
+{% block extrahead %}
+<style>
+  main {
+    max-width: 1200px !important;
+    margin: 10px auto !important;
+    padding: 0 15px !important;
+  }
+  
+  h1 {
+    font-size: 1.8em !important;
+    margin-bottom: 15px !important;
+  }
+  
+  .calendar-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    overflow: hidden;
+    height: calc(100vh - 180px);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .calendar-header {
+    background: #009885;
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  
+  .nav-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+  
+  .nav-btn:hover {
+    background: rgba(255,255,255,0.3);
+  }
+  
+  .calendar-title {
+    font-size: 1.3em;
+    font-weight: 600;
+  }
+  
+  .calendar-table {
+    width: 100%;
+    border-collapse: collapse;
+    flex: 1;
+    height: 100%;
+  }
+  
+  .calendar-table th {
+    background: #f8f9fa;
+    padding: 8px;
+    text-align: center;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    font-size: 14px;
+  }
+  
+  .calendar-table td {
+    height: calc((100vh - 280px) / 6);
+    width: 14.28%;
+    vertical-align: top;
+    padding: 6px;
+    border: 1px solid #dee2e6;
+    position: relative;
+  }
+  
+  .day-number {
+    font-weight: 600;
+    font-size: 14px;
+    color: #495057;
+    margin-bottom: 3px;
+  }
+  
+  .day-today .day-number {
+    background: #009885;
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+  }
+  
+  .day-empty {
+    background: #f8f9fa;
+    color: #adb5bd;
+  }
+  
+  .event-indicators {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    z-index: 2;
+    flex-wrap: wrap;
+    max-width: calc(100% - 10px);
+  }
+  
+
+  
+  .event-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #009885 0%, #00b894 100%);
+    box-shadow: 0 2px 4px rgba(0,152,133,0.3), inset 0 1px 0 rgba(255,255,255,0.3);
+    border: 1px solid rgba(255,255,255,0.4);
+    position: relative;
+    transition: all 0.2s ease;
+  }
+  
+  .event-dot:hover {
+    transform: scale(1.2);
+    box-shadow: 0 3px 6px rgba(0,152,133,0.4), inset 0 1px 0 rgba(255,255,255,0.4);
+  }
+  
+  .event-dot.activo {
+    background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+    box-shadow: 0 2px 4px rgba(255,107,53,0.3), inset 0 1px 0 rgba(255,255,255,0.3);
+    animation: pulse 2s infinite;
+  }
+  
+  .event-dot.programado {
+    background: linear-gradient(135deg, #009885 0%, #00b894 100%);
+    box-shadow: 0 2px 4px rgba(0,152,133,0.3), inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  
+  .event-dot.finalizado {
+    background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+    box-shadow: 0 2px 4px rgba(108,117,125,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+    opacity: 0.8;
+  }
+  
+  .event-dot.cancelado {
+    background: linear-gradient(135deg, #dc3545 0%, #e55353 100%);
+    box-shadow: 0 2px 4px rgba(220,53,69,0.3), inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      box-shadow: 0 2px 4px rgba(255,107,53,0.3), inset 0 1px 0 rgba(255,255,255,0.3), 0 0 0 0 rgba(255,107,53,0.4);
+    }
+    50% {
+      box-shadow: 0 2px 4px rgba(255,107,53,0.3), inset 0 1px 0 rgba(255,255,255,0.3), 0 0 0 4px rgba(255,107,53,0.1);
+    }
+  }
+  
+  .event-overflow {
+    background: linear-gradient(135deg, #C90166 0%, #e91e63 100%);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 3px 5px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+    line-height: 1;
+    box-shadow: 0 2px 4px rgba(201,1,102,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    text-shadow: 0 1px 1px rgba(0,0,0,0.2);
+    transition: all 0.2s ease;
+  }
+  
+  .event-overflow:hover {
+    transform: scale(1.1);
+    box-shadow: 0 3px 6px rgba(201,1,102,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  
+
+  
+  .day-with-events {
+    background: rgba(0, 152, 133, 0.05);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .day-with-events:hover {
+    background: rgba(0, 152, 133, 0.1);
+  }
+  
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .modal-overlay.open {
+    display: flex;
+  }
+  
+  .modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    animation: modalSlideIn 0.3s ease;
+  }
+  
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-50px) scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  
+  .modal-header {
+    background: #009885;
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .modal-title {
+    font-size: 1.2em;
+    font-weight: 600;
+  }
+  
+  .modal-body {
+    padding: 20px;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  
+  .event-item {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-left: 4px solid #009885;
+  }
+  
+  .event-item:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+  }
+  
+  .close-modal {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s;
+  }
+  
+  .close-modal:hover {
+    background: rgba(255,255,255,0.2);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>📅 Calendario de Eventos</h1>
+
+<div class="calendar-container">
+  <div class="calendar-header">
+    <button class="nav-btn" onclick="location.href='?month={{ mes_anterior }}&year={{ año_anterior }}'">← Anterior</button>
+    <div class="calendar-title">{{ mes_nombre }} {{ año }}</div>
+    <div>
+      {% if not es_mes_actual %}
+      <button class="nav-btn" onclick="location.href='{% url 'calendario' %}'">Hoy</button>
+      {% endif %}
+      <button class="nav-btn" onclick="location.href='?month={{ mes_siguiente }}&year={{ año_siguiente }}'">→ Siguiente</button>
+    </div>
+  </div>
+  
+  <table class="calendar-table">
+    <thead>
+      <tr>
+        <th>Lun</th>
+        <th>Mar</th>
+        <th>Mié</th>
+        <th>Jue</th>
+        <th>Vie</th>
+        <th>Sáb</th>
+        <th>Dom</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for semana in calendario %}
+      <tr>
+        {% for dia in semana %}
+          {% if dia == 0 %}
+          <td class="day-empty"></td>
+          {% else %}
+          <td class="{% if dia == hoy %}day-today{% endif %} {% if eventos_por_dia|length > 0 and dia in eventos_por_dia %}day-with-events{% endif %}" 
+              onclick="{% if dia in eventos_por_dia %}showEvents({{ dia }}, '{{ dia }}/{{ mes_nombre }}'){% endif %}">
+            <div class="day-number">{{ dia }}</div>
+            
+            {% if dia in eventos_por_dia %}
+              <div class="event-indicators">
+                {% with eventos_del_dia=eventos_por_dia|dictkey:dia %}
+                  {% for evento in eventos_del_dia %}
+                    {% if forloop.counter <= 4 %}
+                      <div class="event-dot {{ evento.estado }}"></div>
+                    {% endif %}
+                  {% endfor %}
+                  {% if eventos_del_dia|length > 4 %}
+                    <div class="event-overflow">+{{ eventos_del_dia|length|add:"-4" }}</div>
+                  {% endif %}
+                {% endwith %}
+              </div>
+            {% endif %}
+          </td>
+          {% endif %}
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal para mostrar eventos del día -->
+<div class="modal-overlay" id="eventsModal" onclick="closeModal(event)">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Eventos del día</div>
+      <button class="close-modal" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody">
+      <!-- Los eventos se cargarán aquí -->
+    </div>
+  </div>
+</div>
+
+<script>
+function showEvents(dia, fecha) {
+  const eventos = {
+    {% for dia_num, eventos_dia in eventos_por_dia.items %}
+    {{ dia_num }}: [
+      {% for evento in eventos_dia %}
+      {
+        id: {{ evento.id }},
+        nombre: "{{ evento.nombre|escapejs }}",
+        hora: "{{ evento.fecha_hora|timezone:'America/Mexico_City'|date:'H:i' }}",
+        sala: "{{ evento.sala.nombre|escapejs }}",
+        estado: "{{ evento.get_estado_display|escapejs }}",
+        estado_class: "{{ evento.estado }}",
+        observaciones: "{{ evento.observaciones|escapejs }}",
+        requiere_laptop: {{ evento.requiere_laptop|yesno:"true,false" }},
+        requiere_proyector: {{ evento.requiere_proyector|yesno:"true,false" }},
+        numero_laptop: "{{ evento.numero_laptop|default:'' }}"
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ]{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  };
+  
+  document.getElementById('modalTitle').innerHTML = `📅 Eventos del ${fecha}`;
+  
+  let content = '';
+  if (eventos[dia]) {
+    eventos[dia].forEach(evento => {
+      const borderColor = evento.estado_class === 'activo' ? '#ff6b35' : 
+                         evento.estado_class === 'programado' ? '#009885' : 
+                         evento.estado_class === 'finalizado' ? '#6c757d' : '#C90166';
+      
+      content += `
+        <div class="event-item" onclick="location.href='/editar/${evento.id}/'" style="border-left-color: ${borderColor};">
+          <h4 style="margin: 0 0 10px 0; color: #172b4d; font-size: 1.1em;">${evento.nombre}</h4>
+          <div style="display: grid; gap: 6px; margin-bottom: 10px;">
+            <p style="margin: 0; font-size: 14px; color: #42526e;"><strong>⏰ Hora:</strong> ${evento.hora}</p>
+            <p style="margin: 0; font-size: 14px; color: #42526e;"><strong>🏢 Sala:</strong> ${evento.sala}</p>
+            <p style="margin: 0; font-size: 14px; color: #42526e;"><strong>📊 Estado:</strong> 
+              <span style="background: ${evento.estado_class === 'activo' ? '#fff3e0; color: #e65100' : evento.estado_class === 'programado' ? '#deebff; color: #0052cc' : evento.estado_class === 'finalizado' ? '#f4f5f7; color: #6b778c' : '#e3fcef; color: #006644'}; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase;">${evento.estado}</span>
+            </p>
+          </div>
+          ${evento.observaciones ? `<div style="background: #f8f9fa; padding: 8px; border-radius: 6px; margin-bottom: 10px;"><p style="margin: 0; font-size: 13px; color: #495057;"><strong>📝 Observaciones:</strong> ${evento.observaciones}</p></div>` : ''}
+          ${evento.requiere_laptop || evento.requiere_proyector ? `
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              ${evento.requiere_laptop ? `<span style="background: #f4f5f7; color: #42526e; padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: 500;">💻 Laptop${evento.numero_laptop ? ' #' + evento.numero_laptop : ''}</span>` : ''}
+              ${evento.requiere_proyector ? `<span style="background: #f4f5f7; color: #42526e; padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: 500;">📽️ Proyector</span>` : ''}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    });
+  } else {
+    content = '<p style="text-align: center; color: #8993a4; font-style: italic; padding: 40px;">No hay eventos para este día</p>';
+  }
+  
+  document.getElementById('modalBody').innerHTML = content;
+  document.getElementById('eventsModal').classList.add('open');
+}
+
+function closeModal(event) {
+  if (event && event.target !== event.currentTarget) return;
+  document.getElementById('eventsModal').classList.remove('open');
+}
+</script>
+{% endblock %}
