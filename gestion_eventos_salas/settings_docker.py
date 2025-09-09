@@ -1,7 +1,7 @@
 from .settings import *
 import os
 
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['172.16.35.75', 'localhost', '127.0.0.1']
 
