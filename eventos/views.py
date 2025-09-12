@@ -1,19 +1,29 @@
 from datetime import timedelta
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.views import LoginView
 from django.utils import timezone
 from django.http import HttpResponse
-from django.urls import reverse
-from .models import Evento, Nota
+from django.urls import reverse, reverse_lazy
+from .models import Evento, Nota, Sala
 from .forms import EventoForm, NotaForm
+
+def es_admin(user):
+    """Verifica si el usuario es superusuario o staff."""
+    return user.is_superuser or user.is_staff
+
+def es_gestor_o_admin(user):
+    """Verifica si el usuario es admin o pertenece al grupo 'Gestor de Eventos'."""
+    return es_admin(user) or user.groups.filter(name='Gestor de Eventos').exists()
+
 
 class CustomLoginView(LoginView):
     """Vista de login personalizada que redirige con mensaje de bienvenida"""
     template_name = 'registration/login.html'
     
     def get_success_url(self):
-        return reverse('dashboard') + '?welcome=1'
+        return reverse_lazy('dashboard') + '?welcome=1'
 
 def actualizar_estados_eventos():
     """Actualiza automáticamente los estados de los eventos"""
@@ -36,6 +46,11 @@ def actualizar_estados_eventos():
 
 @login_required
 def dashboard(request):
+    # Si el usuario no es admin (superusuario/staff), redirigirlo al calendario.
+    if not es_admin(request.user):
+        return redirect('calendario')
+
+
     # Actualizar estados automáticamente
     actualizar_estados_eventos()
     
@@ -76,6 +91,7 @@ def dashboard(request):
     return render(request, 'eventos/dashboard.html', context)
 
 @login_required
+@user_passes_test(es_admin)
 def estadisticas(request):
     hoy = timezone.localdate()
     
@@ -122,6 +138,7 @@ def estadisticas(request):
 
 
 @login_required
+@user_passes_test(es_gestor_o_admin)
 def crear_evento(request):
     if request.method == 'POST':
         form = EventoForm(request.POST)
@@ -129,24 +146,43 @@ def crear_evento(request):
             evento = form.save(commit=False)
             evento.creado_por = request.user
             evento.save()
-            return redirect('dashboard')
+            if es_admin(request.user):
+                return redirect('dashboard')
+            else:
+                return redirect('calendario') # Este ya estaba bien, pero lo confirmo
     else:
         form = EventoForm()
-    return render(request, 'eventos/crear_evento.html', {'form': form})
+    
+    salas_disponibles = Sala.objects.filter(activa=True)
+    context = {'form': form, 'salas_disponibles': salas_disponibles}
+    
+    return render(request, 'eventos/crear_evento.html', context)
 
 @login_required
+@user_passes_test(es_gestor_o_admin)
 def editar_evento(request, evento_id):
     evento = get_object_or_404(Evento, id=evento_id)
     if request.method == 'POST':
         form = EventoForm(request.POST, instance=evento)
         if form.is_valid():
             form.save()
-            return redirect('dashboard')
+            if es_admin(request.user):
+                return redirect('dashboard')
+            else:
+                return redirect('calendario') # Este también estaba bien
     else:
         form = EventoForm(instance=evento)
-    return render(request, 'eventos/editar_evento.html', {'form': form, 'evento': evento})
+        
+    salas_disponibles = Sala.objects.filter(activa=True) # Se mantiene para el formulario
+    context = {
+        'form': form, 
+        'evento': evento,
+        'salas_disponibles': salas_disponibles
+    }
+    return render(request, 'eventos/editar_evento.html', context)
 
 @login_required
+@user_passes_test(es_gestor_o_admin)
 def calendario_eventos(request):
     import calendar
     from collections import defaultdict
@@ -211,6 +247,7 @@ def calendario_eventos(request):
     return render(request, 'eventos/calendario.html', context)
 
 @login_required
+@user_passes_test(es_admin)
 def finalizar_evento(request, evento_id):
     evento = get_object_or_404(Evento, id=evento_id)
     evento.estado = 'finalizado'
@@ -218,11 +255,13 @@ def finalizar_evento(request, evento_id):
     return redirect('dashboard')
 
 @login_required
+@user_passes_test(es_admin)
 def notas(request):
     notas = Nota.objects.filter(creado_por=request.user)
     return render(request, 'eventos/notas.html', {'notas': notas})
 
 @login_required
+@user_passes_test(es_admin)
 def crear_nota(request):
     if request.method == 'POST':
         form = NotaForm(request.POST)
@@ -236,6 +275,7 @@ def crear_nota(request):
     return render(request, 'eventos/crear_nota.html', {'form': form})
 
 @login_required
+@user_passes_test(es_admin)
 def editar_nota(request, nota_id):
     nota = get_object_or_404(Nota, id=nota_id, creado_por=request.user)
     if request.method == 'POST':
@@ -248,6 +288,7 @@ def editar_nota(request, nota_id):
     return render(request, 'eventos/editar_nota.html', {'form': form, 'nota': nota})
 
 @login_required
+@user_passes_test(es_admin)
 def eliminar_nota(request, nota_id):
     nota = get_object_or_404(Nota, id=nota_id, creado_por=request.user)
     if request.method == 'POST':
@@ -256,6 +297,7 @@ def eliminar_nota(request, nota_id):
     return render(request, 'eventos/eliminar_nota.html', {'nota': nota})
 
 @login_required
+@user_passes_test(es_admin)
 def imprimir_eventos_manana(request):
     hoy = timezone.localdate()
     manana = hoy + timedelta(days=1)
@@ -409,4 +451,3 @@ def imprimir_eventos_manana(request):
 """
     
     return HttpResponse(html_content, content_type='text/html')
-

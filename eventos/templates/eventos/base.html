@@ -1,8 +1,10 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <title>{% block title %}Gestión de Eventos{% endblock %}</title>
+<link rel="stylesheet" href="{% static 'eventos/css/form_styles.css' %}">
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <style>
   /* Estilos básicos */
@@ -166,12 +168,20 @@
           </a>
       </div>
       <nav>
-          <a href="{% url 'dashboard' %}">📊 Dashboard</a>
+          {% if user.is_superuser or user.is_staff %}
+            <a href="{% url 'dashboard' %}">📊 Dashboard</a>
+          {% endif %}
+          
           <a href="{% url 'calendario' %}">📅 Calendario</a>
-          <a href="{% url 'estadisticas' %}">📈 Estadísticas</a>
-          <a href="{% url 'notas' %}">📝 Notas</a>
+          
+          {% if user.is_superuser or user.is_staff %}
+            <a href="{% url 'estadisticas' %}">📈 Estadísticas</a>
+            <a href="{% url 'notas' %}">📝 Notas</a>
+          {% endif %}
+          
           <a href="{% url 'crear_evento' %}">➕ Crear Evento</a>
-          {% if request.resolver_match.url_name == 'dashboard' %}
+          
+          {% if request.resolver_match.url_name != 'crear_evento' and request.resolver_match.url_name != 'editar_evento' %}
           <form method="post" action="{% url 'logout' %}" style="display: inline; margin: 0;">
               {% csrf_token %}
               <button type="submit" class="logout-btn">🚪 Salir</button>

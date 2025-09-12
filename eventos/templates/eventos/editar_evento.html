@@ -157,7 +157,7 @@
   }
   
   .cancelar {
-    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    background: linear-gradient(135deg, #AE192D 0%, #C90166 100%);
     color: white;
     text-decoration: none;
     padding: 12px 25px;
@@ -168,15 +168,15 @@
     letter-spacing: 0.5px;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
-    min-width: 120px;
     text-align: center;
     display: inline-block;
+    min-width: 120px;
   }
   
   .cancelar:hover {
+    background: linear-gradient(135deg, #C90166 0%, #AE192D 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
-    background: linear-gradient(135deg, #495057 0%, #6c757d 100%);
+    box-shadow: 0 8px 25px rgba(174, 25, 45, 0.4);
   }
   
   .laptop-number {
@@ -313,6 +313,74 @@
     color: #009885;
   }
   
+  /* Estilos para el selector de Sala */
+  .sala-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+  }
+
+  .sala-option {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border: 2px solid #e8ecef;
+    border-radius: 12px;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sala-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    border-color: #C90166;
+  }
+
+  .sala-option.active {
+    background: linear-gradient(135deg, rgba(201, 1, 102, 0.1) 0%, rgba(201, 1, 102, 0.05) 100%);
+    border-color: #C90166;
+    box-shadow: 0 4px 15px rgba(201, 1, 102, 0.2);
+  }
+
+  .sala-icon {
+    font-size: 24px;
+    margin-right: 12px;
+    min-width: 30px;
+    text-align: center;
+  }
+
+  .sala-info {
+    flex: 1;
+  }
+
+  .sala-title {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+
+  .sala-check {
+    font-size: 18px;
+    color: #C90166;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.3s ease;
+  }
+
+  .sala-option.active .sala-check {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .sala-option.active .sala-title {
+    color: #C90166;
+  }
+
   @media (max-width: 768px) {
     .container {
       margin: 20px auto;
@@ -344,6 +412,10 @@
     .estado-icon {
       font-size: 20px;
       margin-right: 10px;
+    }
+
+    .sala-selector {
+      grid-template-columns: 1fr;
     }
   }
 </style>
@@ -381,7 +453,19 @@
 
     <div class="form-group">
       <label for="{{ form.sala.id_for_label }}">🏢 Sala</label>
-      {{ form.sala }}
+      <!-- Selector de Sala personalizado -->
+      <div class="sala-selector">
+        {{ form.sala }} {# Este input ahora estará oculto #}
+        {% for sala_obj in salas_disponibles %}
+        <div class="sala-option{% if form.sala.value == sala_obj.id %} active{% endif %}" data-value="{{ sala_obj.id }}">
+          <div class="sala-icon">🏢</div>
+          <div class="sala-info">
+            <div class="sala-title">{{ sala_obj.nombre }}</div>
+          </div>
+          <div class="sala-check">✓</div>
+        </div>
+        {% endfor %}
+      </div>
       {% if form.sala.errors %}
         <div class="error">{{ form.sala.errors }}</div>
       {% endif %}
@@ -461,7 +545,11 @@
 
     <div class="button-group">
       <button type="submit">💾 Guardar Cambios</button>
-      <a href="{% url 'dashboard' %}" class="cancelar">❌ Cancelar</a>
+      {% if user.is_superuser or user.is_staff %}
+        <a href="{% url 'dashboard' %}" class="cancelar">❌ Cancelar</a>
+      {% else %}
+        <a href="{% url 'calendario' %}" class="cancelar">❌ Cancelar</a>
+      {% endif %}
     </div>
   </form>
 </div>
@@ -471,6 +559,8 @@
     const chkLaptop = document.getElementById('{{ form.requiere_laptop.id_for_label }}');
     const laptopNumberGroup = document.getElementById('laptop-number-group');
     const numeroLaptopInput = document.getElementById('{{ form.numero_laptop.id_for_label }}');
+    const salaInput = document.getElementById('{{ form.sala.id_for_label }}');
+    const salaOptions = document.querySelectorAll('.sala-option');
 
     function toggleNumeroLaptop() {
       if (chkLaptop.checked) {
@@ -486,6 +576,9 @@
     // Inicializar estado
     toggleNumeroLaptop();
     chkLaptop.addEventListener('change', toggleNumeroLaptop);
+
+    // Ocultar el select original de Sala
+    salaInput.style.display = 'none';
     
     // Animación suave para los inputs al hacer focus
     const inputs = document.querySelectorAll('input, select, textarea');
@@ -498,6 +591,21 @@
         this.parentElement.style.transform = 'scale(1)';
       });
     });
+
+    // Manejo del selector de sala
+    salaOptions.forEach(option => {
+      option.addEventListener('click', function() {
+        salaOptions.forEach(opt => opt.classList.remove('active'));
+        this.classList.add('active');
+        salaInput.value = this.getAttribute('data-value');
+      });
+    });
+
+    // Inicializar el selector de sala si hay un valor previo
+    if (salaInput.value) {
+      const activeSala = document.querySelector(`.sala-option[data-value="${salaInput.value}"]`);
+      if (activeSala) activeSala.classList.add('active');
+    }
     
     // Manejo del selector de estado
     const estadoOptions = document.querySelectorAll('.estado-option');

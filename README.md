@@ -27,7 +27,7 @@ venv\Scripts\activate  # En Windows
 
 3. Instala las dependencias:
 ```bash
-pip install django
+pip install django django-crispy-forms crispy-bootstrap5
 ```
 
 4. Ejecuta las migraciones:
@@ -54,7 +54,7 @@ python manage.py runserver
 ## Tecnologías
 
 - Django 4.x
-- SQLite
+- SQLite (Base de datos por defecto en este proyecto)
 - HTML/CSS/JavaScript
 - Bootstrap (opcional)
 
